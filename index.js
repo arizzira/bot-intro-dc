@@ -60,11 +60,12 @@ client.on(Events.InteractionCreate, async interaction => {
 
     if (interaction.commandName === 'intro') {
 
-      const embed = new EmbedBuilder()
+const embed = new EmbedBuilder()
         .setColor('#5865F2')
-        .setTitle('📝 Intro Member Baru')
-        .setDescription('Silakan klik tombol di bawah untuk mengisi form intro kamu!\n\n📋 **Form terdiri dari:**\n• Nama\n• Umur\n• Hobby\n• Tentang diri kamu')
-        .setFooter({ text: 'Isi dengan jujur dan menarik ya!' });
+        .setTitle('📝 Intro Member Baru & Absen Puasa')
+        .setDescription('Silakan klik tombol di bawah untuk mengisi form intro kamu!\n\n📋 **Form terdiri dari:**\n• Nama\n• Umur\n• Hobby\n• Absen Puasa 🌙\n• Tentang diri kamu')
+        .setFooter({ text: 'Isi dengan jujur dan semangat terus puasanya ya!' });
+        
 
       const button = new ButtonBuilder()
         .setCustomId('button_intro')
@@ -81,7 +82,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
   }
 
-  // ================= BUTTON =================
+ // ================= BUTTON =================
   if (interaction.isButton()) {
     if (interaction.customId === 'button_intro') {
 
@@ -107,16 +108,26 @@ client.on(Events.InteractionCreate, async interaction => {
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
+      // --- TAMBAHAN INPUT ABSEN PUASA ---
+      const puasa = new TextInputBuilder()
+        .setCustomId('puasa')
+        .setLabel('Absen Puasa (Masih Full / Udah Bolong?)')
+        .setPlaceholder('Misal: Alhamdulillah full / Bolong 2 bang')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true);
+
       const tentang = new TextInputBuilder()
         .setCustomId('tentang')
         .setLabel('Tentang Kamu')
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(false);
 
+      // Masukin 5 komponen ke dalam modal (Maksimal di Discord emang 5)
       modal.addComponents(
         new ActionRowBuilder().addComponents(nama),
         new ActionRowBuilder().addComponents(umur),
         new ActionRowBuilder().addComponents(hobby),
+        new ActionRowBuilder().addComponents(puasa), // Tambahin di sini
         new ActionRowBuilder().addComponents(tentang)
       );
 
@@ -129,9 +140,20 @@ client.on(Events.InteractionCreate, async interaction => {
     if (interaction.customId === 'modal_intro') {
 
      const nama = interaction.fields.getTextInputValue('nama');
-     const umur = interaction.fields.getTextInputValue('umur');
+     const umurRaw = interaction.fields.getTextInputValue('umur');
      const hobby = interaction.fields.getTextInputValue('hobby');
+     // --- AMBIL DATA PUASA ---
+     const puasa = interaction.fields.getTextInputValue('puasa'); 
      const tentang = interaction.fields.getTextInputValue('tentang') || 'Tidak diisi';
+
+     // --- LOGIKA FILTER UMUR ---
+     const umurAngka = parseInt(umurRaw, 10);
+     let umurFinal = umurRaw; 
+
+     if (!isNaN(umurAngka)) {
+       umurFinal = umurAngka >= 21 ? '> 20' : '< 20';
+     }
+     // --------------------------
 
      const channel = await client.channels.fetch(process.env.CHANNEL_ID);
 
@@ -142,10 +164,12 @@ client.on(Events.InteractionCreate, async interaction => {
         iconURL: interaction.user.displayAvatarURL({ dynamic: true })
       })
       .setTitle(`✨ ${nama}`)
-      .setDescription('Selamat datang di server! Jangan lupa sapa member lain ya 👋')
+      .setDescription('Selamat datang di server! Semoga puasanya lancar terus ya 👋')
       .addFields(
         { name: '👤 Nama', value: `\`${nama}\``, inline: true },
-        { name: '🎂 Umur', value: `\`${umur}\``, inline: true },
+        { name: '🎂 Umur', value: `\`${umurFinal}\``, inline: true }, 
+        // --- TAMPILAN DI EMBED ---
+        { name: '🌙 Absen Puasa', value: `\`${puasa}\``, inline: true }, 
         { name: '🎮 Hobby', value: `\`${hobby}\`` },
         { name: '📝 Tentang Saya', value: `>>> ${tentang}` }
       )
@@ -164,7 +188,7 @@ client.on(Events.InteractionCreate, async interaction => {
     });
 
     await interaction.reply({
-      content: '✅ Intro berhasil dikirim ke #daftar-hadir!',
+      content: '✅ Intro dan absen puasa berhasil dikirim ke #daftar-hadir!',
       ephemeral: true
     });
 
